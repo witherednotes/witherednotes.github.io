@@ -1,3 +1,8 @@
 h1 {
 	color: red;
 }
+
+#site-navigator-iframe {
+	width: 10em;
+	height: 5em;
+}

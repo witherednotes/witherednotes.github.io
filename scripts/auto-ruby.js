@@ -1,4 +1,93 @@
-// TODO: Add polyfill for older browsers that do not support codePointAt()
+// Represents an entire text.
+class AutoRubyText {
+	constructor(text) {
+		this.srcText = text;
+		this.lines = [];    // an Array of AutoRubyLine
+		const srcLines = text.split('\n');
+		for (let l of srcLines)
+			this.lines.push(new AutoRubyLine(l));
+	}
+}
+
+// Represents a line of input.
+class AutoRubyLine {
+	constructor(text) {
+		this.srcText = text;
+		this.groups = [];    // an Array of either AutoRubyNonHanGroup or AutoRubyHanGroup
+		this.buildGroups();
+	}
+
+	// split this.srcText into Han/Non-Han groups
+	// and push them into this.groups
+	buildGroups() {
+		let isCurrentlyHan = false;
+		let s = 0, e = 0;
+		for (let c of this.srcText)
+		{
+			if (isHanIdeograph(c))
+			{
+				if (!isCurrentlyHan)
+				{
+					if (s < e)
+						this.groups.push(new AutoRubyNonHanGroup(text.slice(s, e)));
+					s = e;
+				}
+				e += c.length;
+			}
+			else
+			{
+				if (isCurrentlyHan)
+				{
+					if (s < e)
+						this.groups.push(new AutoRubyHanGroup(text.slice(s, e)));
+					s = e;
+				}
+				e += c.length;
+			}
+		}
+
+		// deal with any leftovers
+		if (s < e)
+		{
+			if (isCurrentlyHan)
+			{
+				this.groups.push(new AutoRubyHanGroup(text.slice(s, e)));
+			}
+			else
+			{
+				this.groups.push(new AutoRubyNonHanGroup(text.slice(s, e)));
+			}
+		}
+	}
+}
+
+// Represents a portion of text.
+class AutoRubyGroup {
+	constructor(text) {
+		this.srcText = text;
+	}
+}
+
+// Represents a portion of text that does not contain any han ideographs.
+class AutoRubyNonHanGroup extends AutoRubyGroup {
+	constructor(text) {
+		super(text);
+	}
+}
+
+// Represents a portion of text that contains only han ideographs.
+class AutoRubyHanGroup extends AutoRubyGroup {
+	constructor(text) {
+		super(text);
+	}
+}
+
+// Represents individual han ideographs.
+class AutoRubyHanChar {
+	constructor(chr) {
+		this.srcChar = chr;
+	}
+}
 
 // isHanIdeograph():
 // "is the first Unicode character in the given string a Han ideograph?"

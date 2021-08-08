@@ -2,21 +2,27 @@
 let currentSrcText = "";
 let currentText = null;
 
+let currentLine = 0;
+let currentGroup = 0;
+
 // Represents an entire text.
 class AutoRubyText {
 	constructor(text) {
 		this.srcText = text;
 		this.lines = [];    // an Array of AutoRubyLine
+
 		const srcLines = text.split('\n');
+		let lineNo = 0;
 		for (let l of srcLines)
-			this.lines.push(new AutoRubyLine(l));
+			this.lines.push(new AutoRubyLine(l, lineNo++));
 	}
 }
 
 // Represents a line of input.
 class AutoRubyLine {
-	constructor(text) {
+	constructor(text, lineNo) {
 		this.srcText = text;
+		this.lineNo = lineNo;
 		this.groups = [];    // an Array of either AutoRubyNonHanGroup or AutoRubyHanGroup
 		this.buildGroups();
 	}
@@ -25,7 +31,7 @@ class AutoRubyLine {
 	// and push them into this.groups
 	buildGroups() {
 		let isCurrentlyHan = false;
-		let s = 0, e = 0;
+		let s = 0, e = 0, groupNo = 0;
 		for (let c of this.srcText)
 		{
 			if (isHanIdeograph(c))
@@ -33,7 +39,7 @@ class AutoRubyLine {
 				if (!isCurrentlyHan)
 				{
 					if (s < e)
-						this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e)));
+						this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e), groupNo++));
 					s = e;
 					isCurrentlyHan = true;
 				}
@@ -44,7 +50,7 @@ class AutoRubyLine {
 				if (isCurrentlyHan)
 				{
 					if (s < e)
-						this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e)));
+						this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e), groupNo++));
 					s = e;
 					isCurrentlyHan = false;
 				}
@@ -57,34 +63,48 @@ class AutoRubyLine {
 		{
 			if (isCurrentlyHan)
 			{
-				this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e)));
+				this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e), groupNo++));
 			}
 			else
 			{
-				this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e)));
+				this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e), groupNo++));
 			}
 		}
+	}
+
+	generateDisplayNode() {
+		let node = document.createElement("p");
+		for (let g of this.groups)
+			node.appendChild(g.generateDisplayNode());
+		return node;
 	}
 }
 
 // Represents a portion of text.
 class AutoRubyGroup {
-	constructor(text) {
+	constructor(text, groupNo) {
 		this.srcText = text;
+		this.groupNo = groupNo;
+	}
+
+	generateDisplayNode() {
+		let node = document.createElement("span");
+		node.innerText = this.srcText;
+		return node;
 	}
 }
 
 // Represents a portion of text that does not contain any han ideographs.
 class AutoRubyNonHanGroup extends AutoRubyGroup {
-	constructor(text) {
-		super(text);
+	constructor(text, groupNo) {
+		super(text, groupNo);
 	}
 }
 
 // Represents a portion of text that contains only han ideographs.
 class AutoRubyHanGroup extends AutoRubyGroup {
-	constructor(text) {
-		super(text);
+	constructor(text, groupNo) {
+		super(text, groupNo);
 	}
 }
 
@@ -147,11 +167,74 @@ function isHanIdeograph(chr)
 	return false;
 }
 
+function refreshProgressDisplay()
+{
+	let prev = null, curr = null, next = null;
+	if (currentLine > 0)
+		prev = currentText.lines[currentLine-1];
+	curr = currentText.lines[currentLine];
+	if (currentLine < currentText.lines.length-1)
+		next = currentText.lines[currentLine+1];
+
+	let dispPrev = document.getElementById("progress-display-prev");
+	let dispCurr = document.getElementById("progress-display-curr");
+	let dispNext = document.getElementById("progress-display-next");
+
+	dispPrev.textContent = "";
+	dispCurr.textContent = "";
+	dispNext.textContent = "";
+
+	if (prev) dispPrev.appendChild(prev.generateDisplayNode());
+	dispCurr.appendChild(curr.generateDisplayNode());
+	if (next) dispNext.appendChild(next.generateDisplayNode());
+}
+
+function searchInitialLine()
+{
+	for (let i=0; i<currentText.lines.length; ++i)
+	{
+		if (currentText.lines[i].groups.length > 0)
+		{
+			currentLine = i;
+			currentGroup = 0;
+			return true;
+		}
+	}
+	return false;
+}
+
+function goNextGroup()
+{
+	if (currentGroup === currentText.lines[currentLine].groups.length-1)    // is last group?
+	{
+		if (currentLine === currentText.lines.length-1)    // is last line?
+			return false;
+		++currentLine;
+		currentGroup = 0;
+	}
+	else
+	{
+		++currentGroup;
+	}
+	return true;
+}
+
+function initializeRubyInput()
+{
+	currentSrcText = document.getElementById("text-input").value;
+	currentText = new AutoRubyText(currentSrcText);
+	searchInitialLine();
+	refreshProgressDisplay();
+}
+
 function registerEvents()
 {
 	document.getElementById("text-input-commit-button").onclick = function (e) {
-		currentSrcText = document.getElementById("text-input").value;
-		currentText = new AutoRubyText(currentSrcText);
+		initializeRubyInput();
+	};
+	document.getElementById("ruby-input-next").onclick = function (e) {
+		goNextGroup();
+		refreshProgressDisplay();
 	};
 }
 

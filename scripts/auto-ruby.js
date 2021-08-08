@@ -35,6 +35,7 @@ class AutoRubyLine {
 					if (s < e)
 						this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e)));
 					s = e;
+					isCurrentlyHan = true;
 				}
 				e += c.length;
 			}
@@ -45,6 +46,7 @@ class AutoRubyLine {
 					if (s < e)
 						this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e)));
 					s = e;
+					isCurrentlyHan = false;
 				}
 				e += c.length;
 			}

@@ -1,3 +1,7 @@
+// Global states
+let currentSrcText = "";
+let currentText = null;
+
 // Represents an entire text.
 class AutoRubyText {
 	constructor(text) {
@@ -29,7 +33,7 @@ class AutoRubyLine {
 				if (!isCurrentlyHan)
 				{
 					if (s < e)
-						this.groups.push(new AutoRubyNonHanGroup(text.slice(s, e)));
+						this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e)));
 					s = e;
 				}
 				e += c.length;
@@ -39,7 +43,7 @@ class AutoRubyLine {
 				if (isCurrentlyHan)
 				{
 					if (s < e)
-						this.groups.push(new AutoRubyHanGroup(text.slice(s, e)));
+						this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e)));
 					s = e;
 				}
 				e += c.length;
@@ -51,11 +55,11 @@ class AutoRubyLine {
 		{
 			if (isCurrentlyHan)
 			{
-				this.groups.push(new AutoRubyHanGroup(text.slice(s, e)));
+				this.groups.push(new AutoRubyHanGroup(this.srcText.slice(s, e)));
 			}
 			else
 			{
-				this.groups.push(new AutoRubyNonHanGroup(text.slice(s, e)));
+				this.groups.push(new AutoRubyNonHanGroup(this.srcText.slice(s, e)));
 			}
 		}
 	}
@@ -140,3 +144,15 @@ function isHanIdeograph(chr)
 
 	return false;
 }
+
+function registerEvents()
+{
+	document.getElementById("text-input-commit-button").onclick = function (e) {
+		currentSrcText = document.getElementById("text-input").value;
+		currentText = new AutoRubyText(currentSrcText);
+	};
+}
+
+window.addEventListener("load", function (e) {
+	registerEvents();
+});

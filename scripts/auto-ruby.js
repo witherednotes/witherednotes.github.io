@@ -4,9 +4,95 @@ let currentText = null;
 
 let currentLine = 0;
 let currentGroup = 0;
+let currentChar = 0;
+
+// Used to step forward/backward through AutoRubyText.
+class AutoRubyStepper {
+	constructor(ARText) {
+		this.targetText = ARText;
+		this.steps = [];
+		buildSteps();
+
+		this.currentLine = 0;
+		this.currentGroupIdx = 0;
+		this.currentChar = 0;
+	}
+
+	get currentGroup() {
+		return this.steps[this.currentLine][this.currentGroupIdx];
+	}
+
+	buildSteps() {
+		for (let l of this.targetText)
+		{
+			let hanGroups = [];
+			for (let i=0; i<l.length; ++i)
+				if (l[i] instanceof AutoRubyHanGroup)
+					hanGroups.push(i);
+			this.steps.push(hanGroups);
+		}
+	}
+
+	// go to next line which contains at least one Han group
+	// returns true if found one, false otherwise
+	goNextLine() {
+		for (let i=this.currentLine+1; i<this.steps.length; ++i)
+		{
+			if (this.steps[i].length)
+			{
+				this.currentLine = i;
+				this.currentGroup = 0;
+				this.currentChar = 0;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	goPrevLine() {
+		for (let i=this.currentLine-1; i>=0; --i)
+		{
+			if (this.steps[i].length)
+			{
+				this.currentLine = i;
+				this.currentGroup = 0;
+				this.currentChar = 0;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	goNextGroup() {
+		if (this.currentGroup+1 < this.steps[this.currentLine].length)
+		{
+			++this.currentGroupIdx;
+			this.currentChar = 0;
+			return true;
+		}
+		return false;
+	}
+
+	goPrevGroup() {
+		if (this.currentGroup > 0)
+		{
+			--this.currentGroupIdx;
+			this.currentChar = 0;
+			return true;
+		}
+		return false;
+	}
+
+	goNextChar() {
+	}
+
+	goPrevChar() {
+	}
+}
 
 // Represents an entire text.
 class AutoRubyText {
+	// 'text' is a string to parse
 	constructor(text) {
 		this.srcText = text;
 		this.lines = [];    // an Array of AutoRubyLine
@@ -85,6 +171,7 @@ class AutoRubyGroup {
 	constructor(text, groupNo) {
 		this.srcText = text;
 		this.groupNo = groupNo;
+		this.ruby = "";
 	}
 
 	generateDisplayNode() {
@@ -103,15 +190,20 @@ class AutoRubyNonHanGroup extends AutoRubyGroup {
 
 // Represents a portion of text that contains only han ideographs.
 class AutoRubyHanGroup extends AutoRubyGroup {
-	constructor(text, groupNo) {
+	constructor(text, groupNo, isSep) {
 		super(text, groupNo);
+		this.isSep = Boolean(isSep);
+		this.chars = [];
+		for (let c of this.srcText)
+			this.chars.push(new AutoRubyHanChar(c));
 	}
 }
 
 // Represents individual han ideographs.
 class AutoRubyHanChar {
-	constructor(chr) {
+	constructor(chr, ruby) {
 		this.srcChar = chr;
+		this.ruby = ruby || "";
 	}
 }
 

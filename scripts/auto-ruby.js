@@ -1,6 +1,7 @@
 // Global states
 let currentSrcText = "";
 let currentText = null;
+let currentStep = null;
 
 let currentLine = 0;
 let currentGroup = 0;
@@ -10,12 +11,21 @@ let currentChar = 0;
 class AutoRubyStepper {
 	constructor(ARText) {
 		this.targetText = ARText;
-		this.steps = [];
-		buildSteps();
+		this.steps = [];    // contains lists of indices of Han groups
+		this.buildSteps();
 
-		this.currentLine = 0;
+		this.currentLine = -1;    // -1 means no Han group in the text
 		this.currentGroupIdx = 0;
 		this.currentChar = 0;
+
+		for (let i=0; i<this.steps.length; ++i)
+		{
+			if (this.steps[i].length > 0)
+			{
+				this.currentLine = i;
+				break;
+			}
+		}
 	}
 
 	get currentGroup() {
@@ -23,11 +33,11 @@ class AutoRubyStepper {
 	}
 
 	buildSteps() {
-		for (let l of this.targetText)
+		for (let l of this.targetText.lines)
 		{
 			let hanGroups = [];
-			for (let i=0; i<l.length; ++i)
-				if (l[i] instanceof AutoRubyHanGroup)
+			for (let i=0; i<l.groups.length; ++i)
+				if (l.groups[i] instanceof AutoRubyHanGroup)
 					hanGroups.push(i);
 			this.steps.push(hanGroups);
 		}
@@ -41,7 +51,7 @@ class AutoRubyStepper {
 			if (this.steps[i].length)
 			{
 				this.currentLine = i;
-				this.currentGroup = 0;
+				this.currentGroupIdx = 0;
 				this.currentChar = 0;
 				return true;
 			}
@@ -55,7 +65,7 @@ class AutoRubyStepper {
 			if (this.steps[i].length)
 			{
 				this.currentLine = i;
-				this.currentGroup = 0;
+				this.currentGroupIdx = 0;
 				this.currentChar = 0;
 				return true;
 			}
@@ -64,29 +74,49 @@ class AutoRubyStepper {
 	}
 
 	goNextGroup() {
-		if (this.currentGroup+1 < this.steps[this.currentLine].length)
+		if (this.currentGroupIdx+1 < this.steps[this.currentLine].length)
 		{
 			++this.currentGroupIdx;
 			this.currentChar = 0;
 			return true;
 		}
-		return false;
+		return this.goNextLine();
 	}
 
 	goPrevGroup() {
-		if (this.currentGroup > 0)
+		if (this.currentGroupIdx > 0)
 		{
 			--this.currentGroupIdx;
 			this.currentChar = 0;
+			return true;
+		}
+		if (this.goPrevLine())
+		{
+			this.currentGroupIdx = this.steps[this.currentLine].length-1;
 			return true;
 		}
 		return false;
 	}
 
 	goNextChar() {
+		const currGroup = this.targetText.getGroup(
+			this.currentLine, this.currentGroup
+		);
+		if (this.currentChar+1 < currGroup.chars.length)
+		{
+			++this.currentChar;
+			return true;
+		}
+		return goNextGroup();
 	}
 
 	goPrevChar() {
+		if (this.currentChar > 0)
+		{
+			--this.currentChar;
+			return true;
+		}
+		return goPrevGroup();
 	}
 }
 
@@ -101,6 +131,14 @@ class AutoRubyText {
 		let lineNo = 0;
 		for (let l of srcLines)
 			this.lines.push(new AutoRubyLine(l, lineNo++));
+	}
+
+	getLine(idx) {
+		return lines[idx];
+	}
+
+	getGroup(idxL, idxG) {
+		return lines[idxL].groups[idxG];
 	}
 }
 
@@ -197,6 +235,13 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 		for (let c of this.srcText)
 			this.chars.push(new AutoRubyHanChar(c));
 	}
+
+	generateDisplayNode() {
+		let node = document.createElement("span");
+		node.innerText = this.srcText;
+		node.classList.add("han-group");
+		return node;
+	}
 }
 
 // Represents individual han ideographs.
@@ -261,12 +306,16 @@ function isHanIdeograph(chr)
 
 function refreshProgressDisplay()
 {
+	let l = currentStep.currentLine;
+	let g = currentStep.currentGroup;
+	let c = currentStep.currentChar;
+
 	let prev = null, curr = null, next = null;
-	if (currentLine > 0)
-		prev = currentText.lines[currentLine-1];
-	curr = currentText.lines[currentLine];
-	if (currentLine < currentText.lines.length-1)
-		next = currentText.lines[currentLine+1];
+	if (l > 0)
+		prev = currentText.lines[l-1];
+	curr = currentText.lines[l];
+	if (l < currentText.lines.length-1)
+		next = currentText.lines[l+1];
 
 	let dispPrev = document.getElementById("progress-display-prev");
 	let dispCurr = document.getElementById("progress-display-curr");
@@ -276,9 +325,11 @@ function refreshProgressDisplay()
 	dispCurr.textContent = "";
 	dispNext.textContent = "";
 
+	let nodeCurr = curr.generateDisplayNode();
+	nodeCurr.childNodes[currentStep.currentGroup].classList.add("current-group");
 	if (prev) dispPrev.appendChild(prev.generateDisplayNode());
-	dispCurr.appendChild(curr.generateDisplayNode());
 	if (next) dispNext.appendChild(next.generateDisplayNode());
+	dispCurr.appendChild(nodeCurr);
 }
 
 function searchInitialLine()
@@ -295,26 +346,11 @@ function searchInitialLine()
 	return false;
 }
 
-function goNextGroup()
-{
-	if (currentGroup === currentText.lines[currentLine].groups.length-1)    // is last group?
-	{
-		if (currentLine === currentText.lines.length-1)    // is last line?
-			return false;
-		++currentLine;
-		currentGroup = 0;
-	}
-	else
-	{
-		++currentGroup;
-	}
-	return true;
-}
-
 function initializeRubyInput()
 {
 	currentSrcText = document.getElementById("text-input").value;
 	currentText = new AutoRubyText(currentSrcText);
+	currentStep = new AutoRubyStepper(currentText);
 	searchInitialLine();
 	refreshProgressDisplay();
 }
@@ -325,7 +361,11 @@ function registerEvents()
 		initializeRubyInput();
 	};
 	document.getElementById("ruby-input-next").onclick = function (e) {
-		goNextGroup();
+		currentStep.goNextGroup();
+		refreshProgressDisplay();
+	};
+	document.getElementById("ruby-input-prev").onclick = function (e) {
+		currentStep.goPrevGroup();
 		refreshProgressDisplay();
 	};
 }

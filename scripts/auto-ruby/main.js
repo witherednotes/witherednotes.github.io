@@ -45,20 +45,29 @@ function registerEvents()
 		initializeRubyInput();
 	};
 	document.getElementById("ruby-input-next").onclick = function (e) {
-		currentStep.goNextGroup();
+		if (currentStep.currentGroupObj.isSep)
+			currentStep.goNextChar();
+		else
+			currentStep.goNextGroup();
 		let rubyInput = document.getElementById("ruby-input");
 		rubyInput.value = currentStep.currentGroupObj.ruby;
 		refreshProgressDisplay();
 	};
 	document.getElementById("ruby-input-prev").onclick = function (e) {
-		currentStep.goPrevGroup();
+		if (currentStep.currentGroupObj.isSep)
+			currentStep.goPrevChar();
+		else
+			currentStep.goPrevGroup();
 		let rubyInput = document.getElementById("ruby-input");
 		rubyInput.value = currentStep.currentGroupObj.ruby;
 		refreshProgressDisplay();
 	};
 	document.getElementById("ruby-input").onchange = function (e) {
 		let ruby = document.getElementById("ruby-input").value;
-		currentStep.currentGroupObj.setRuby(ruby);
+		if (currentStep.currentGroupObj.isSep)
+			currentStep.currentCharObj.setRuby(ruby);
+		else
+			currentStep.currentGroupObj.setRuby(ruby);
 		refreshProgressDisplay();
 	};
 }

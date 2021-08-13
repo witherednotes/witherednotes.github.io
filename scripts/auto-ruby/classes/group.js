@@ -36,22 +36,31 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 		let node = document.createElement("span");
 		node.classList.add("han-group");
 
-		let ruby = document.createElement("ruby");
-		ruby.innerText = this.srcText;
+		if (this.isSep)
+		{
+			for (let c of this.chars)
+				node.appendChild(c.generateDisplayNode());
+		}
+		else
+		{
+			let ruby = document.createElement("ruby");
+			ruby.innerText = this.srcText;
 
-		let rubyParenLeft = document.createElement("rp");
-		rubyParenLeft.innerText = '(';
-		ruby.appendChild(rubyParenLeft);
+			let rubyParenLeft = document.createElement("rp");
+			rubyParenLeft.innerText = '(';
+			ruby.appendChild(rubyParenLeft);
 
-		let rubyText = document.createElement("rt");
-		rubyText.innerText = this.ruby;
-		ruby.appendChild(rubyText);
+			let rubyText = document.createElement("rt");
+			rubyText.innerText = this.ruby;
+			ruby.appendChild(rubyText);
 
-		let rubyParenRight = document.createElement("rp");
-		rubyParenRight.innerText = ')';
-		ruby.appendChild(rubyParenRight);
+			let rubyParenRight = document.createElement("rp");
+			rubyParenRight.innerText = ')';
+			ruby.appendChild(rubyParenRight);
 
-		node.appendChild(ruby);
+			node.appendChild(ruby);
+		}
+
 		return node;
 	}
 

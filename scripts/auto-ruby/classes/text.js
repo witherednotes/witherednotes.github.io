@@ -12,10 +12,10 @@ class AutoRubyText {
 	}
 
 	getLine(idx) {
-		return lines[idx];
+		return this.lines[idx];
 	}
 
 	getGroup(idxL, idxG) {
-		return lines[idxL].groups[idxG];
+		return this.lines[idxL].groups[idxG];
 	}
 }

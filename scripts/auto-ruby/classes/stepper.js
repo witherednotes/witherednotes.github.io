@@ -33,7 +33,7 @@ class AutoRubyStepper {
 	}
 
 	get currentCharObj() {
-		return this.currentCharObj.chars[this.currentChar];
+		return this.currentGroupObj.chars[this.currentChar];
 	}
 
 	buildSteps() {
@@ -111,7 +111,7 @@ class AutoRubyStepper {
 			++this.currentChar;
 			return true;
 		}
-		return goNextGroup();
+		return this.goNextGroup();
 	}
 
 	goPrevChar() {
@@ -120,7 +120,7 @@ class AutoRubyStepper {
 			--this.currentChar;
 			return true;
 		}
-		return goPrevGroup();
+		return this.goPrevGroup();
 	}
 }
 

@@ -32,7 +32,7 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 	}
 
 	// TODO: implement when this.isSep === true
-	generateDisplayNode() {
+	generateDisplayNode(omitRp) {
 		let node = document.createElement("span");
 		node.classList.add("han-group");
 
@@ -46,17 +46,23 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 			let ruby = document.createElement("ruby");
 			ruby.innerText = this.srcText;
 
-			let rubyParenLeft = document.createElement("rp");
-			rubyParenLeft.innerText = '(';
-			ruby.appendChild(rubyParenLeft);
+			if (!omitRp)
+			{
+				let rubyParenLeft = document.createElement("rp");
+				rubyParenLeft.innerText = '(';
+				ruby.appendChild(rubyParenLeft);
+			}
 
 			let rubyText = document.createElement("rt");
 			rubyText.innerText = this.ruby;
 			ruby.appendChild(rubyText);
 
-			let rubyParenRight = document.createElement("rp");
-			rubyParenRight.innerText = ')';
-			ruby.appendChild(rubyParenRight);
+			if (!omitRp)
+			{
+				let rubyParenRight = document.createElement("rp");
+				rubyParenRight.innerText = ')';
+				ruby.appendChild(rubyParenRight);
+			}
 
 			node.appendChild(ruby);
 		}

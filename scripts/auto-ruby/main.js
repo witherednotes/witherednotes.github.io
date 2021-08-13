@@ -25,7 +25,14 @@ function refreshProgressDisplay()
 	dispNext.textContent = "";
 
 	let nodeCurr = curr.generateDisplayNode();
-	nodeCurr.childNodes[currentStep.currentGroup].classList.add("current-group");
+	if (currentStep.currentGroupObj.isSep)
+	{
+		nodeCurr.childNodes[g].childNodes[c].classList.add("current-char");
+	}
+	else
+	{
+		nodeCurr.childNodes[g].classList.add("current-group");
+	}
 	if (prev) dispPrev.appendChild(prev.generateDisplayNode());
 	if (next) dispNext.appendChild(next.generateDisplayNode());
 	dispCurr.appendChild(nodeCurr);
@@ -44,24 +51,37 @@ function registerEvents()
 	document.getElementById("text-input-commit-button").onclick = function (e) {
 		initializeRubyInput();
 	};
+
 	document.getElementById("ruby-input-next").onclick = function (e) {
 		if (currentStep.currentGroupObj.isSep)
 			currentStep.goNextChar();
 		else
 			currentStep.goNextGroup();
 		let rubyInput = document.getElementById("ruby-input");
+		let rubyInputPerChar = document.getElementById("ruby-input-per-char");
 		rubyInput.value = currentStep.currentGroupObj.ruby;
+		rubyInputPerChar.checked = currentStep.currentGroupObj.isSep;
 		refreshProgressDisplay();
 	};
+
 	document.getElementById("ruby-input-prev").onclick = function (e) {
 		if (currentStep.currentGroupObj.isSep)
 			currentStep.goPrevChar();
 		else
 			currentStep.goPrevGroup();
 		let rubyInput = document.getElementById("ruby-input");
+		let rubyInputPerChar = document.getElementById("ruby-input-per-char");
 		rubyInput.value = currentStep.currentGroupObj.ruby;
+		rubyInputPerChar.checked = currentStep.currentGroupObj.isSep;
 		refreshProgressDisplay();
 	};
+
+	document.getElementById("ruby-input-per-char").onchange = function (e) {
+		let perChar = document.getElementById("ruby-input-per-char").checked;
+		currentStep.currentGroupObj.isSep = perChar;
+		refreshProgressDisplay();
+	};
+
 	document.getElementById("ruby-input").onchange = function (e) {
 		let ruby = document.getElementById("ruby-input").value;
 		if (currentStep.currentGroupObj.isSep)

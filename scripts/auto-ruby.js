@@ -3,10 +3,6 @@ let currentSrcText = "";
 let currentText = null;
 let currentStep = null;
 
-let currentLine = 0;
-let currentGroup = 0;
-let currentChar = 0;
-
 // Used to step forward/backward through AutoRubyText.
 class AutoRubyStepper {
 	constructor(ARText) {
@@ -18,6 +14,7 @@ class AutoRubyStepper {
 		this.currentGroupIdx = 0;
 		this.currentChar = 0;
 
+		// find first line that has a Han group
 		for (let i=0; i<this.steps.length; ++i)
 		{
 			if (this.steps[i].length > 0)
@@ -30,6 +27,18 @@ class AutoRubyStepper {
 
 	get currentGroup() {
 		return this.steps[this.currentLine][this.currentGroupIdx];
+	}
+
+	get currentLineObj() {
+		return this.targetText.lines[this.currentLine];
+	}
+
+	get currentGroupObj() {
+		return this.currentLineObj.groups[this.currentGroup];
+	}
+
+	get currentCharObj() {
+		return this.currentCharObj.chars[this.currentChar];
 	}
 
 	buildSteps() {
@@ -228,19 +237,41 @@ class AutoRubyNonHanGroup extends AutoRubyGroup {
 
 // Represents a portion of text that contains only han ideographs.
 class AutoRubyHanGroup extends AutoRubyGroup {
-	constructor(text, groupNo, isSep) {
+	constructor(text, groupNo, isSep, ruby) {
 		super(text, groupNo);
 		this.isSep = Boolean(isSep);
+		this.ruby = ruby || "";
 		this.chars = [];
 		for (let c of this.srcText)
 			this.chars.push(new AutoRubyHanChar(c));
 	}
 
+	// TODO: implement when this.isSep === true
 	generateDisplayNode() {
 		let node = document.createElement("span");
-		node.innerText = this.srcText;
 		node.classList.add("han-group");
+
+		let ruby = document.createElement("ruby");
+		ruby.innerText = this.srcText;
+
+		let rubyParenLeft = document.createElement("rp");
+		rubyParenLeft.innerText = '(';
+		ruby.appendChild(rubyParenLeft);
+
+		let rubyText = document.createElement("rt");
+		rubyText.innerText = this.ruby;
+		ruby.appendChild(rubyText);
+
+		let rubyParenRight = document.createElement("rp");
+		rubyParenRight.innerText = ')';
+		ruby.appendChild(rubyParenRight);
+
+		node.appendChild(ruby);
 		return node;
+	}
+
+	setRuby(ruby) {
+		this.ruby = ruby;
 	}
 }
 
@@ -332,26 +363,11 @@ function refreshProgressDisplay()
 	dispCurr.appendChild(nodeCurr);
 }
 
-function searchInitialLine()
-{
-	for (let i=0; i<currentText.lines.length; ++i)
-	{
-		if (currentText.lines[i].groups.length > 0)
-		{
-			currentLine = i;
-			currentGroup = 0;
-			return true;
-		}
-	}
-	return false;
-}
-
 function initializeRubyInput()
 {
 	currentSrcText = document.getElementById("text-input").value;
 	currentText = new AutoRubyText(currentSrcText);
 	currentStep = new AutoRubyStepper(currentText);
-	searchInitialLine();
 	refreshProgressDisplay();
 }
 
@@ -362,10 +378,19 @@ function registerEvents()
 	};
 	document.getElementById("ruby-input-next").onclick = function (e) {
 		currentStep.goNextGroup();
+		let rubyInput = document.getElementById("ruby-input");
+		rubyInput.value = currentStep.currentGroupObj.ruby;
 		refreshProgressDisplay();
 	};
 	document.getElementById("ruby-input-prev").onclick = function (e) {
 		currentStep.goPrevGroup();
+		let rubyInput = document.getElementById("ruby-input");
+		rubyInput.value = currentStep.currentGroupObj.ruby;
+		refreshProgressDisplay();
+	};
+	document.getElementById("ruby-input").onchange = function (e) {
+		let ruby = document.getElementById("ruby-input").value;
+		currentStep.currentGroupObj.setRuby(ruby);
 		refreshProgressDisplay();
 	};
 }

@@ -58,4 +58,11 @@ class AutoRubyLine {
 			node.appendChild(g.generateDisplayNode());
 		return node;
 	}
+
+	generateHtmlOutput(omitRp) {
+		let joinee = [];
+		for (let g of this.groups)
+			joinee.push(g.generateHtmlOutput(omitRp));
+		return joinee.join("");
+	}
 }

@@ -11,6 +11,10 @@ class AutoRubyGroup {
 		node.innerText = this.srcText;
 		return node;
 	}
+
+	generateHtmlOutput() {
+		return this.srcText;
+	}
 }
 
 // Represents a portion of text that does not contain any han ideographs.
@@ -31,7 +35,6 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 			this.chars.push(new AutoRubyHanChar(c));
 	}
 
-	// TODO: implement when this.isSep === true
 	generateDisplayNode(omitRp) {
 		let node = document.createElement("span");
 		node.classList.add("han-group");
@@ -68,6 +71,33 @@ class AutoRubyHanGroup extends AutoRubyGroup {
 		}
 
 		return node;
+	}
+
+	generateHtmlOutput(omitRp) {
+		if (this.isSep)
+		{
+			let joinee = [];
+			for (let c of this.chars)
+				joinee.push(c.generateHtmlOutput(omitRp));
+			return joinee.join("");
+		}
+		else
+		{
+			let joinee = [];
+			if (this.ruby)
+			{
+				joinee.push("<ruby>", this.srcText);
+				if (!omitRp) joinee.push("<rp>(</rp>");
+				joinee.push("<rt>", this.ruby, "</rt>");
+				if (!omitRp) joinee.push("<rp>)</rp>");
+				joinee.push("</ruby>");
+				return joinee.join("");
+			}
+			else
+			{
+				return this.srcText;
+			}
+		}
 	}
 
 	setRuby(ruby) {

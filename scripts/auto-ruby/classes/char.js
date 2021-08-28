@@ -30,6 +30,23 @@ class AutoRubyHanChar {
 		return ruby;
 	}
 
+	generateHtmlOutput(omitRp) {
+		let joinee = [];
+		if (this.ruby)
+		{
+			joinee.push("<ruby>", this.srcChar);
+			if (!omitRp) joinee.push("<rp>(</rp>");
+			joinee.push("<rt>", this.ruby, "</rt>");
+			if (!omitRp) joinee.push("<rp>)</rp>");
+			joinee.push("</ruby>");
+			return joinee.join("");
+		}
+		else
+		{
+			return this.srcChar;
+		}
+	}
+
 	setRuby(ruby) {
 		this.ruby = ruby;
 	}

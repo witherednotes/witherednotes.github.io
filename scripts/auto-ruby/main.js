@@ -46,6 +46,12 @@ function initializeRubyInput()
 	refreshProgressDisplay();
 }
 
+function showRubyResult()
+{
+	let htmlOutput = document.getElementById("html-output");
+	htmlOutput.textContent = currentText.generateHtmlOutput();
+}
+
 function registerEvents()
 {
 	document.getElementById("text-input-commit-button").onclick = function (e) {
@@ -89,6 +95,10 @@ function registerEvents()
 		else
 			currentStep.currentGroupObj.setRuby(ruby);
 		refreshProgressDisplay();
+	};
+
+	document.getElementById("ruby-input-finish").onclick = function (e) {
+		showRubyResult();
 	};
 }
 

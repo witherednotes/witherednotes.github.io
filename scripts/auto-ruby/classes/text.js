@@ -18,4 +18,13 @@ class AutoRubyText {
 	getGroup(idxL, idxG) {
 		return this.lines[idxL].groups[idxG];
 	}
+
+	generateHtmlOutput(omitRp, lineSep) {
+		if (lineSep !== "")
+			lineSep = lineSep || "\n";
+		let joinee = [];
+		for (let l of this.lines)
+			joinee.push(l.generateHtmlOutput(omitRp));
+		return joinee.join(lineSep);
+	}
 }

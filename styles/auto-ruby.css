@@ -1,0 +1,15 @@
+#progress-display {
+	font-size: 200%;
+}
+
+.han-group {
+	background-color: yellow;
+}
+
+.current-group {
+	background-color: orange;
+}
+
+.current-char {
+	background-color: orange;
+}
